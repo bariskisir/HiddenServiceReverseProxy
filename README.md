@@ -37,7 +37,10 @@ networks:
 docker exec hiddenservicereverseproxy cat /var/lib/tor/hidden_service/hostname
 ```
 
-### Testing with tor browser
+### (Option 1) Testing with Brave Browser
+[Brave Browser](https://brave.com/)
+
+### (Option 2) Testing with tor browser
 Create tor browser on docker
 ```sh
 docker run -d --name torbrowser -p 5800:5800 domistyle/tor-browser
