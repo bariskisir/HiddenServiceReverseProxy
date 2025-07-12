@@ -1,50 +1,68 @@
 # HiddenServiceReverseProxy
-HiddenServiceReverseProxy is a reverse proxy that help you host applications on tor network with docker.
+
+**HiddenServiceReverseProxy** is a Docker-based reverse proxy that helps you host applications on the Tor network. It makes it easy to expose web applications through the Tor network without manually setting up Tor's hidden service configuration.
+
+## Features
+
+- Easily host any web application (e.g., Nginx, Apache) as a hidden service on the Tor network.
+- Minimal configuration: Just set your backend IP/domain and port, and the proxy will handle everything.
+- Automatically generates and exposes the `.onion` address for your service.
+- Persist Tor data using Docker volumes, ensuring service easy to move.
+
+## Prerequisites
+
+- **Docker** and **Docker Compose** installed on your system.
+
 
 ## Single usage
 ```sh
-docker run -e HIDDEN_SERVICE_DIR="/var/lib/tor/hidden_service/" -e HIDDEN_SERVICE_PORT="80 192.168.1.10:80" --name hiddenservicereverseproxy bariskisir/hiddenservicereverseproxy
+docker run -d \
+  -e APP_IP_DOMAIN="192.168.1.10" \ 
+  -e APP_PORT="80" \ 
+  -v tor_data:/var/lib/tor \ 
+  --name hiddenservicereverseproxy \ 
+  --restart unless-stopped \ 
+  bariskisir/hiddenservicereverseproxy
 ```
 
 ## Docker compose
 ```sh
-version: '3.4'
-
 services:
 
   web:
     image: nginx
     networks: 
-      - network01
-    restart: always
+      - tor_network
+    restart: unless-stopped
 
-  hiddenservice:
+  hiddenservicereverseproxy:
     image: bariskisir/hiddenservicereverseproxy
-    environment: 
-      HIDDEN_SERVICE_DIR: /var/lib/tor/hidden_service/
-      HIDDEN_SERVICE_PORT: 80 web:80
-    networks: 
-      - network01
-    restart: always
+    environment:
+      APP_IP_DOMAIN: web
+      APP_PORT: 80
+    networks:
+      - tor_network
+    volumes:
+      - tor_data:/var/lib/tor
+    restart: unless-stopped
 
 networks:
-    network01:
-      driver: bridge
+  tor_network:
+    driver: bridge
+
+volumes:
+  tor_data:
+    driver: local
+
 ```
 
-### Getting the domain from container
+### Getting the .onion domain from container
 ```sh
-docker exec hiddenservicereverseproxy cat /var/lib/tor/hidden_service/hostname
+docker logs hiddenservicereverseproxy
 ```
 
-### (Option 1) Testing with Brave Browser
+### Testing with Brave Browser
 [Brave Browser](https://brave.com/)
-
-### (Option 2) Testing with tor browser
-Create tor browser on docker
-```sh
-docker run -d --name torbrowser -p 5800:5800 domistyle/tor-browser
-```
-Navigate http://localhost:5800
+Alt+Shift+N for tor mode.
 
 [Dockerhub](https://hub.docker.com/r/bariskisir/hiddenservicereverseproxy)
